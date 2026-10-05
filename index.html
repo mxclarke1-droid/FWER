@@ -1,0 +1,212 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santa Sleigh 3D Test</title>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #050505;
+            font-family: Arial, sans-serif;
+        }
+
+        #info {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 16px;
+            border-radius: 8px;
+        }
+
+        #status {
+            color: #00ff88;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="info">
+    🎅 Santa Sleigh 3D Test<br>
+    <span id="status">Loading Santa's sleigh...</span>
+</div>
+
+<script type="module">
+    import * as THREE from
+        "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+    import { OrbitControls } from
+        "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+
+    import { GLTFLoader } from
+        "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+
+    // -------------------------
+    // Scene
+    // -------------------------
+
+    const scene = new THREE.Scene();
+
+    scene.background = new THREE.Color(0x050505);
+
+    // -------------------------
+    // Camera
+    // -------------------------
+
+    const camera = new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        10000
+    );
+
+    camera.position.set(0, 2, 8);
+
+    // -------------------------
+    // Renderer
+    // -------------------------
+
+    const renderer = new THREE.WebGLRenderer({
+        antialias: true
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    document.body.appendChild(renderer.domElement);
+
+    // -------------------------
+    // Controls
+    // -------------------------
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+
+    controls.enableDamping = true;
+
+    // -------------------------
+    // Lighting
+    // -------------------------
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2);
+    scene.add(ambientLight);
+
+    const mainLight = new THREE.DirectionalLight(0xffffff, 4);
+    mainLight.position.set(5, 10, 5);
+    scene.add(mainLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 2);
+    fillLight.position.set(-5, 5, -5);
+    scene.add(fillLight);
+
+    // -------------------------
+    // Ground reference
+    // -------------------------
+
+    const grid = new THREE.GridHelper(20, 20);
+    scene.add(grid);
+
+    // -------------------------
+    // Load Santa
+    // -------------------------
+
+    const loader = new GLTFLoader();
+
+    loader.load(
+        "santa_-_norad_santa_tracker.glb",
+
+        function (gltf) {
+
+            const santa = gltf.scene;
+
+            scene.add(santa);
+
+            // Automatically find the size of the model
+            const box = new THREE.Box3().setFromObject(santa);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+
+            // Put the model's center at the origin
+            santa.position.sub(center);
+
+            // Scale the model so it fits nicely
+            const maxSize = Math.max(size.x, size.y, size.z);
+
+            if (maxSize > 0) {
+                const scale = 4 / maxSize;
+                santa.scale.setScalar(scale);
+            }
+
+            document.getElementById("status").textContent =
+                "Sleigh loaded! 🎅🛷";
+
+            console.log("Santa model loaded:", gltf);
+        },
+
+        function (progress) {
+
+            if (progress.total > 0) {
+                const percent =
+                    Math.round((progress.loaded / progress.total) * 100);
+
+                document.getElementById("status").textContent =
+                    "Loading... " + percent + "%";
+            }
+        },
+
+        function (error) {
+
+            console.error("GLB loading error:", error);
+
+            document.getElementById("status").textContent =
+                "ERROR: Could not load the GLB.";
+
+            document.getElementById("status").style.color = "red";
+        }
+    );
+
+    // -------------------------
+    // Animation
+    // -------------------------
+
+    function animate() {
+
+        requestAnimationFrame(animate);
+
+        controls.update();
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // -------------------------
+    // Window resize
+    // -------------------------
+
+    window.addEventListener("resize", function () {
+
+        camera.aspect =
+            window.innerWidth / window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+    });
+
+</script>
+
+</body>
+</html>
+```
